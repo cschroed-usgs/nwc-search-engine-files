@@ -93,7 +93,7 @@ if __name__=="__main__":
     sitemap_files = []
     
     context = {'root_url' : args.root_url,
-               'last_modified' : datetime.datetime.today().isoformat()}
+               'last_modified' : datetime.datetime.today().strftime("%d/%m/%y")}
     
     print 'Retrieving HUCs and gage IDs from %s' % args.geoserver
     
