@@ -8,6 +8,7 @@ import os
 from jinja2 import FileSystemLoader
 from jinja2.environment import Environment
 import codecs
+import htmlmin
 
 """
     generate all of the skeleton html files of a particular kind
@@ -18,7 +19,7 @@ import codecs
     env - jinja.environment
     destination_dir - String path with trailing slash
 """
-def generate_themed_skeletons(theme_data, template_file_name, context, theme_path, env, destination_dir):
+def generate_themed_skeletons(theme_data, template_file_name, context, theme_path, env, destination_dir, minify_html):
     
     template = env.get_template(template_file_name)
     data_length = len(theme_data)
@@ -26,11 +27,16 @@ def generate_themed_skeletons(theme_data, template_file_name, context, theme_pat
         try:
             datum_url = context['root_url'] + theme_path + datum['id']
             datum_file_name = os.path.join(destination_dir, hashlib.sha1(datum_url).hexdigest() + ".html")
-            print 'saving skeletal representation of {0} to {1} ({2}/{3})'.format(datum_url, datum_file_name, index, data_length)
+            print 'saving skeletal representation of {0} to {1} ({2}/{3})'.format(datum_url, datum_file_name, index+1, data_length)
             datum_file = codecs.open(datum_file_name, 'w', 'utf-8')
             merged_context = context.copy()
             merged_context.update(datum)
-            datum_file.write(template.render(merged_context))
+            content = template.render(merged_context)
+
+            if minify_html:
+                content = htmlmin.minify(content)
+            
+            datum_file.write(content)
             datum_file.close()
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -41,7 +47,7 @@ generate skeletal versions of all pages in the app
   destination_dir - a dir to put the sitemap files into
   rootContext - a dictionary to provide context for the templates
 '''
-def generate_skeleton(data, destination_dir, context):
+def generate_skeleton(data, destination_dir, context, minify_html):
     TEMPLATE_BASE_DIR =       os.path.join('templates', 'skeleton')
     WB_HUC_TEMPLATE = 'waterbudget_huc.html'
     SF_HUC_TEMPLATE = 'streamflow_huc.html'
@@ -54,11 +60,11 @@ def generate_skeleton(data, destination_dir, context):
     
     print 'Creating files in %s'  % destination_dir
 
-    generate_themed_skeletons(data['datasets'], DATA_TEMPLATE, context, '#!data-discovery/dataDetail/', env, destination_dir)
-    generate_themed_skeletons(data['projects'], PROJECT_TEMPLATE, context, '#!data-discovery/projectDetail/', env, destination_dir)
-    generate_themed_skeletons(data['streamflow_gages'], SF_GAGE_TEMPLATE, context, '#!streamflow-stats/gage/', env, destination_dir)
-    generate_themed_skeletons(data['streamflow_hucs'], SF_HUC_TEMPLATE, context, '#!streamflow-stats/huc/', env, destination_dir)
-    generate_themed_skeletons(data['waterbudget_hucs'], WB_HUC_TEMPLATE, context, '#!waterbudget/huc/', env, destination_dir)
+    generate_themed_skeletons(data['datasets'], DATA_TEMPLATE, context, '#!data-discovery/dataDetail/', env, destination_dir, minify_html)
+    generate_themed_skeletons(data['projects'], PROJECT_TEMPLATE, context, '#!data-discovery/projectDetail/', env, destination_dir, minify_html)
+    generate_themed_skeletons(data['streamflow_gages'], SF_GAGE_TEMPLATE, context, '#!streamflow-stats/gage/', env, destination_dir, minify_html)
+    generate_themed_skeletons(data['streamflow_hucs'], SF_HUC_TEMPLATE, context, '#!streamflow-stats/huc/', env, destination_dir, minify_html)
+    generate_themed_skeletons(data['waterbudget_hucs'], WB_HUC_TEMPLATE, context, '#!waterbudget/huc/', env, destination_dir, minify_html)
 
 def main(argv):
 
@@ -73,7 +79,7 @@ def main(argv):
                }
     data = {}
     data = gc.get_nwc_data(geoserver, sciencebase)
-    generate_skeleton(data, args.destination_dir, context)
+    generate_skeleton(data, args.destination_dir, context, args.minify_html)
 
 if __name__=="__main__":
     main(sys.argv)

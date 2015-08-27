@@ -85,7 +85,16 @@ def parse_args (argv):
     parser.add_argument('--destination_dir', 
                         help='Destination directory for the sitemap.xml file. Defaults to the directory where the script is run.',
                         default='')
+    parser.add_argument('--minify_html', 
+                        help='Boolean, "true" to minify html, "false" to produce human-readable html. Defaults to "true"',
+                        default='true')
     args = parser.parse_args(args=argv[1:])
+    if args.minify_html.lower() == 'true' :
+        args.minify_html = True
+    elif args.minify_html.lower() == 'false' :
+        args.minify_html = False
+    else:
+        raise ValueError("the parameter 'minify_html' must be 'true' or 'false'. Recieved: '{0}'.".format(str(args.minify_html)))
     return args
 
 '''

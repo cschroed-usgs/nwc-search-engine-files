@@ -30,7 +30,7 @@ def main(argv):
 
     generate_browse.generate_root_browse(data, destination_dir, context)
     generate_sitemap.generate_sitemap(data, destination_dir, context)
-    generate_skeleton.generate_skeleton(data, destination_dir, context)
+    generate_skeleton.generate_skeleton(data, destination_dir, context, args.minify_html)
     
 if __name__=="__main__":
     main(sys.argv)
